@@ -3,7 +3,7 @@ module github.com/grid-stream-org/theo
 go 1.23.2
 
 require (
-	github.com/grid-stream-org/go-commons v0.2.0
+	github.com/grid-stream-org/go-commons v1.0.0
 	github.com/knadh/koanf/parsers/json v0.1.0
 	github.com/knadh/koanf/providers/file v1.1.2
 	github.com/knadh/koanf/v2 v2.1.2
@@ -31,6 +31,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.4 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
+	github.com/grid-stream-org/batcher v0.3.1 // indirect
 	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
 	github.com/knadh/koanf/maps v0.1.1 // indirect
