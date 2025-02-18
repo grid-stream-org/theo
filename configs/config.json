@@ -1,0 +1,17 @@
+{
+  "theo": {
+    "timeout": 0,
+    "poll_interval": "1d"
+  },
+  "database": {
+      "project_id": "REDACTED",
+      "dataset_id": "REDACTED",
+      "creds_path": "REDACTED"
+
+  },
+  "log": {
+    "level": "DEBUG",
+    "format": "json",
+    "output": "stdout"
+  }
+}
