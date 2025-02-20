@@ -3,7 +3,9 @@ package handler
 import (
 	"context"
 	"log/slog"
+	"time"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
@@ -19,9 +21,9 @@ type K8sHandler struct {
 }
 
 const (
-	Deployment      = "batcher"
-	OnStartReplicas = 1
-	OnEndReplicas   = 0
+	Deployment             = "batcher"
+	defaultOnStartReplicas = 1
+	defaultOnEndReplicas   = 0
 )
 
 func NewK8sHandler(cfg *config.K8s, client *kubernetes.Clientset, log *slog.Logger) event.Handler {
@@ -32,7 +34,7 @@ func NewK8sHandler(cfg *config.K8s, client *kubernetes.Clientset, log *slog.Logg
 	}
 }
 
-func (h *K8sHandler) scaleDeployment(ctx context.Context, deployment string, replicas int32) error {
+func (h *K8sHandler) scaleDeployment(ctx context.Context, deployment string, replicas int32, e event.Event) error {
 	dc := h.client.AppsV1().Deployments(h.cfg.Namespace)
 	dep, err := dc.Get(ctx, deployment, metav1.GetOptions{})
 	if err != nil {
@@ -40,6 +42,16 @@ func (h *K8sHandler) scaleDeployment(ctx context.Context, deployment string, rep
 	}
 
 	dep.Spec.Replicas = &replicas
+
+	if replicas > 0 {
+		dep.Spec.Template.Spec.Containers[0].Env = append(
+			dep.Spec.Template.Spec.Containers[0].Env,
+			corev1.EnvVar{
+				Name:  "BUFFER_START_TIME",
+				Value: e.StartTime.Format(time.RFC3339),
+			},
+		)
+	}
 
 	_, err = dc.Update(ctx, dep, metav1.UpdateOptions{})
 	if err != nil {
@@ -52,11 +64,10 @@ func (h *K8sHandler) scaleDeployment(ctx context.Context, deployment string, rep
 
 func (h *K8sHandler) OnStart(ctx context.Context, e event.Event) error {
 	h.log.Info("starting DR event", e.LogFields()...)
-	return h.scaleDeployment(ctx, Deployment, OnStartReplicas)
+	return h.scaleDeployment(ctx, Deployment, defaultOnStartReplicas, e)
 }
 
-// OnEnd scales down the "batcher" deployment.
 func (h *K8sHandler) OnEnd(ctx context.Context, e event.Event) error {
 	h.log.Info("ending DR event", e.LogFields()...)
-	return h.scaleDeployment(ctx, Deployment, OnEndReplicas)
+	return h.scaleDeployment(ctx, Deployment, defaultOnEndReplicas, e)
 }
