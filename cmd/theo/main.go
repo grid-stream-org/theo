@@ -41,7 +41,7 @@ func run() (err error) {
 		return err
 	}
 
-	// Create batcher
+	// Create Theo
 	theo, err := theo.New(ctx, cfg, log)
 	if err != nil {
 		return err
@@ -54,7 +54,7 @@ func run() (err error) {
 		defer cancel()
 	}
 
-	// Run TheO
+	// Run Theo
 	err = theo.Run(ctx)
 
 	// Check for timeout

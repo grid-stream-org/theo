@@ -1,16 +1,18 @@
 {
   "theo": {
     "timeout": 0,
-    "poll_interval": "1d"
+    "poll_interval": "24h"
   },
   "database": {
-      "project_id": "REDACTED",
-      "dataset_id": "REDACTED",
-      "creds_path": "REDACTED"
-
+    "project_id": "REDACTED",
+    "dataset_id": "REDACTED",
+    "creds_path": "REDACTED"
+  },
+  "k8s": {
+    "namespace": "REDACTED"
   },
   "log": {
-    "level": "DEBUG",
+    "level": "INFO",
     "format": "json",
     "output": "stdout"
   }

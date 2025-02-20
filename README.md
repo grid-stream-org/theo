@@ -40,7 +40,7 @@ git clone https://github.com/grid-stream-org/theo.git
 ```bash
 cd theo
 ```
-3. Populate `configs/config.json` with valid config to run the batcher
+3. Populate `configs/config.json` with valid config to run theo
 4. Install the project dependencies
 ```bash
 make download
