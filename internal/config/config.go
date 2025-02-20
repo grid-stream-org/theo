@@ -16,12 +16,17 @@ import (
 type Config struct {
 	Theo     *Theo            `koanf:"theo"`
 	Database *bqclient.Config `koanf:"database"`
+	K8s      *K8s             `koanf:"k8s"`
 	Log      *logger.Config   `koanf:"log"`
 }
 
 type Theo struct {
 	Timeout      time.Duration `koanf:"timeout"`
 	PollInterval time.Duration `koanf:"poll_interval"`
+}
+
+type K8s struct {
+	Namespace string `koanf:"namespace"`
 }
 
 func Load() (*Config, error) {
@@ -49,5 +54,17 @@ func Load() (*Config, error) {
 }
 
 func (c *Config) Validate() error {
+	if c.Theo == nil {
+		c.Theo = &Theo{PollInterval: time.Duration(24 * time.Hour), Timeout: 0}
+	}
+
+	if err := c.Database.Validate(); err != nil {
+		return errors.WithStack(err)
+	}
+
+	if err := c.Log.Validate(); err != nil {
+		return errors.WithStack(err)
+	}
+
 	return nil
 }
