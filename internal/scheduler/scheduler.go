@@ -11,7 +11,7 @@ import (
 )
 
 type Scheduler interface {
-	Schedule(ctx context.Context, events []event.Event) error
+	Schedule(ctx context.Context, events []event.Event)
 	Stop()
 }
 
@@ -19,6 +19,7 @@ type scheduledEvent struct {
 	event      event.Event
 	startTimer *time.Timer
 	endTimer   *time.Timer
+	active     bool
 }
 
 type eventScheduler struct {
@@ -36,61 +37,79 @@ func NewScheduler(handler event.Handler, log *slog.Logger) Scheduler {
 	}
 }
 
-func (s *eventScheduler) Schedule(ctx context.Context, events []event.Event) error {
+func (s *eventScheduler) Schedule(ctx context.Context, events []event.Event) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// Stop existing timers
-	for _, e := range s.events {
-		if e.startTimer != nil {
-			e.startTimer.Stop()
-		}
-		if e.endTimer != nil {
-			e.endTimer.Stop()
-		}
-	}
+	s.stopAllTimers()
 
-	// Clear and reschedule
 	s.events = make(map[string]scheduledEvent)
+
 	for _, e := range events {
 		if err := s.scheduleEvent(ctx, e); err != nil {
-			return errors.WithStack(err)
+			s.log.Error("failed to schedule event", errLogFields(e, err)...)
+			continue // continue scheduling other events even if one fails
 		}
 	}
-
-	return nil
 }
 
 func (s *eventScheduler) scheduleEvent(ctx context.Context, e event.Event) error {
-	now := time.Now()
-
-	// Only schedule if the event hasn't ended
-	if e.EndTime.Before(now) {
-		return nil
-	}
+	now := time.Now().UTC()
 
 	scheduled := scheduledEvent{
-		event: e,
+		event:  e,
+		active: false,
 	}
 
-	// Schedule start (if not already started)
-	if e.StartTime.Add(-5 * time.Minute).After(now) {
-		startDelay := time.Until(e.StartTime.Add(-5 * time.Minute))
+	if e.StartTime.IsZero() || e.EndTime.IsZero() {
+		return errors.New("event start or end time cannot be zero")
+	}
+	if e.EndTime.Before(e.StartTime) {
+		return errors.New("event end time cannot be before start time")
+	}
+	if e.EndTime.Before(now) {
+		return nil // skip expired events
+	}
+
+	bufferStart := e.StartTime.Add(-5 * time.Minute)
+
+	if now.Before(bufferStart) {
+		// we have time to schedule the 5-minute warning
+		startDelay := time.Until(bufferStart)
 		scheduled.startTimer = time.AfterFunc(startDelay, func() {
-			if err := s.handler.OnStart(ctx, e); err != nil {
-				fields := append([]any{"error", err}, e.LogFields()...)
-				s.log.Error("failed to handle event start", fields...)
+			s.mu.Lock()
+			defer s.mu.Unlock()
+
+			if event, exists := s.events[e.ID]; exists && !event.active {
+				if err := s.handler.OnStart(ctx, e); err != nil {
+					s.log.Error("failed to handle event start", errLogFields(e, err)...)
+				} else {
+					event.active = true
+					s.log.Info("event started", e.LogFields()...)
+				}
 			}
 		})
+	} else if now.Before(e.StartTime) {
+		// within 5 minutes of start, execute OnStart immediately
+		if err := s.handler.OnStart(ctx, e); err != nil {
+			s.log.Error("failed to handle immediate event start", errLogFields(e, err)...)
+		} else {
+			scheduled.active = true
+			s.log.Info("event started immediately", e.LogFields()...)
+		}
 	}
 
-	// Schedule end (if not already ended)
 	if e.EndTime.After(now) {
 		endDelay := time.Until(e.EndTime)
 		scheduled.endTimer = time.AfterFunc(endDelay, func() {
+			s.mu.Lock()
+			defer s.mu.Unlock()
+
 			if err := s.handler.OnEnd(ctx, e); err != nil {
-				fields := append([]any{"error", err}, e.LogFields()...)
-				s.log.Error("failed to handle event end", fields...)
+				s.log.Error("failed to handle event end", errLogFields(e, err)...)
+			} else {
+				s.log.Info("event ended", e.LogFields()...)
+				delete(s.events, e.ID)
 			}
 		})
 	}
@@ -99,18 +118,26 @@ func (s *eventScheduler) scheduleEvent(ctx context.Context, e event.Event) error
 	return nil
 }
 
-func (s *eventScheduler) Stop() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	for id, e := range s.events {
+func (s *eventScheduler) stopAllTimers() {
+	for _, e := range s.events {
 		if e.startTimer != nil {
 			e.startTimer.Stop()
 		}
 		if e.endTimer != nil {
 			e.endTimer.Stop()
 		}
-		delete(s.events, id)
 	}
+}
 
+func errLogFields(e event.Event, err error) []any {
+	return append([]any{"error", err}, e.LogFields()...)
+}
+
+func (s *eventScheduler) Stop() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.stopAllTimers()
+	s.events = make(map[string]scheduledEvent)
+	s.log.Info("scheduler stopped")
 }

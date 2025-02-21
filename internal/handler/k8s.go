@@ -14,7 +14,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-type K8sHandler struct {
+type k8sHandler struct {
 	cfg    *config.K8s
 	client *kubernetes.Clientset
 	log    *slog.Logger
@@ -27,14 +27,14 @@ const (
 )
 
 func NewK8sHandler(cfg *config.K8s, client *kubernetes.Clientset, log *slog.Logger) event.Handler {
-	return &K8sHandler{
+	return &k8sHandler{
 		cfg:    cfg,
 		client: client,
 		log:    log.With("component", "k8s_handler"),
 	}
 }
 
-func (h *K8sHandler) scaleDeployment(ctx context.Context, deployment string, replicas int32, e event.Event) error {
+func (h *k8sHandler) scaleDeployment(ctx context.Context, deployment string, replicas int32, e event.Event) error {
 	dc := h.client.AppsV1().Deployments(h.cfg.Namespace)
 	dep, err := dc.Get(ctx, deployment, metav1.GetOptions{})
 	if err != nil {
@@ -62,12 +62,12 @@ func (h *K8sHandler) scaleDeployment(ctx context.Context, deployment string, rep
 	return nil
 }
 
-func (h *K8sHandler) OnStart(ctx context.Context, e event.Event) error {
+func (h *k8sHandler) OnStart(ctx context.Context, e event.Event) error {
 	h.log.Info("starting DR event", e.LogFields()...)
 	return h.scaleDeployment(ctx, Deployment, defaultOnStartReplicas, e)
 }
 
-func (h *K8sHandler) OnEnd(ctx context.Context, e event.Event) error {
+func (h *k8sHandler) OnEnd(ctx context.Context, e event.Event) error {
 	h.log.Info("ending DR event", e.LogFields()...)
 	return h.scaleDeployment(ctx, Deployment, defaultOnEndReplicas, e)
 }
