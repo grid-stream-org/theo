@@ -49,9 +49,9 @@ func New(ctx context.Context, cfg *config.Config, log *slog.Logger) (*Theo, erro
 }
 
 func (theo *Theo) Run(ctx context.Context) error {
-	theo.log.Info("stating theo")
+	theo.log.Info("starting theo")
 	if err := theo.refresh(ctx); err != nil {
-		return errors.WithStack(err)
+		theo.log.Error("failed to refresh events", "error", err)
 	}
 
 	ticker := time.NewTicker(theo.cfg.Theo.PollInterval)
@@ -77,9 +77,7 @@ func (theo *Theo) refresh(ctx context.Context) error {
 		return errors.WithStack(err)
 	}
 
-	if err := theo.scheduler.Schedule(ctx, events); err != nil {
-		return errors.WithStack(err)
-	}
+	theo.scheduler.Schedule(ctx, events)
 
 	return nil
 }
