@@ -44,24 +44,19 @@ func (h *k8sHandler) scaleDeployment(ctx context.Context, deployment string, rep
 	dep.Spec.Replicas = &replicas
 
 	if replicas > 0 {
-		ev := dep.Spec.Template.Spec.Containers[0].Env
-		found := false
-		for i := range ev {
-			if ev[i].Name == "BUFFER_START_TIME" {
-				ev[i].Value = e.StartTime.Format(time.RFC3339)
-				found = true
-				break
+		// remove any existing start time
+		newEnv := make([]corev1.EnvVar, 0)
+		for _, env := range dep.Spec.Template.Spec.Containers[0].Env {
+			if env.Name != "BUFFER_START_TIME" {
+				newEnv = append(newEnv, env)
 			}
 		}
-		if !found {
-			dep.Spec.Template.Spec.Containers[0].Env = append(
-				dep.Spec.Template.Spec.Containers[0].Env,
-				corev1.EnvVar{
-					Name:  "BUFFER_START_TIME",
-					Value: e.StartTime.Format(time.RFC3339),
-				},
-			)
-		}
+		// add the new start time
+		newEnv = append(newEnv, corev1.EnvVar{
+			Name:  "BUFFER_START_TIME",
+			Value: e.StartTime.Format(time.RFC3339),
+		})
+		dep.Spec.Template.Spec.Containers[0].Env = newEnv
 	}
 
 	_, err = dc.Update(ctx, dep, metav1.UpdateOptions{})
