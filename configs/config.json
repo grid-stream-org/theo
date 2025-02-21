@@ -4,12 +4,12 @@
     "poll_interval": "24h"
   },
   "database": {
-    "project_id": "grid-stream",
-    "dataset_id": "gridstream_operations",
-    "creds_path": "./configs/grid-stream-621568fc2686.json"
+    "project_id": "REDACTED",
+    "dataset_id": "REDACTED",
+    "creds_path": "REDACTED"
   },
   "k8s": {
-    "namespace": "grid-stream-operations"
+    "namespace": "REDACTED"
   },
   "log": {
     "level": "DEBUG",
