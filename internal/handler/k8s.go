@@ -63,11 +63,11 @@ func (h *k8sHandler) scaleDeployment(ctx context.Context, deployment string, rep
 }
 
 func (h *k8sHandler) OnStart(ctx context.Context, e event.Event) error {
-	h.log.Info("starting DR event", e.LogFields()...)
+	h.log.Info("starting event", e.LogFields()...)
 	return h.scaleDeployment(ctx, Deployment, defaultOnStartReplicas, e)
 }
 
 func (h *k8sHandler) OnEnd(ctx context.Context, e event.Event) error {
-	h.log.Info("ending DR event", e.LogFields()...)
+	h.log.Info("ending event", e.LogFields()...)
 	return h.scaleDeployment(ctx, Deployment, defaultOnEndReplicas, e)
 }
