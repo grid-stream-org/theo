@@ -71,7 +71,7 @@ func (s *eventScheduler) scheduleEvent(ctx context.Context, e event.Event) error
 		return nil // skip expired events
 	}
 
-	bufferStart := e.StartTime.Add(-5 * time.Minute)
+	bufferStart := e.StartTime.Add(-1 * time.Minute)
 
 	if now.Before(bufferStart) {
 		// we have time to schedule the 5-minute warning
