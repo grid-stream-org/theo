@@ -21,7 +21,8 @@ type k8sHandler struct {
 }
 
 const (
-	Deployment             = "batcher"
+	batcherDeployment      = "batcher"
+	validatorDeployment    = "validator"
 	defaultOnStartReplicas = 1
 	defaultOnEndReplicas   = 0
 )
@@ -70,10 +71,22 @@ func (h *k8sHandler) scaleDeployment(ctx context.Context, deployment string, rep
 
 func (h *k8sHandler) OnStart(ctx context.Context, e event.Event) error {
 	h.log.Info("starting event", e.LogFields()...)
-	return h.scaleDeployment(ctx, Deployment, defaultOnStartReplicas, e)
+	if err := h.scaleDeployment(ctx, batcherDeployment, defaultOnStartReplicas, e); err != nil {
+		return errors.WithStack(err)
+	}
+	if err := h.scaleDeployment(ctx, validatorDeployment, defaultOnStartReplicas, e); err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 func (h *k8sHandler) OnEnd(ctx context.Context, e event.Event) error {
 	h.log.Info("ending event", e.LogFields()...)
-	return h.scaleDeployment(ctx, Deployment, defaultOnEndReplicas, e)
+	if err := h.scaleDeployment(ctx, batcherDeployment, defaultOnEndReplicas, e); err != nil {
+		return errors.WithStack(err)
+	}
+	if err := h.scaleDeployment(ctx, validatorDeployment, defaultOnEndReplicas, e); err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
