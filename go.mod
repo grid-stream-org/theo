@@ -6,7 +6,7 @@ require (
 	github.com/grid-stream-org/go-commons v0.2.0
 	github.com/knadh/koanf/parsers/json v0.1.0
 	github.com/knadh/koanf/providers/file v1.1.2
-	github.com/knadh/koanf/v2 v2.1.2
+	github.com/knadh/koanf/v2 v2.2.2
 	github.com/pkg/errors v0.9.1
 	go.uber.org/multierr v1.11.0
 	k8s.io/api v0.32.2
@@ -32,7 +32,7 @@ require (
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/jsonreference v0.20.2 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
-	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
+	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
@@ -49,7 +49,7 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
-	github.com/knadh/koanf/maps v0.1.1 // indirect
+	github.com/knadh/koanf/maps v0.1.2 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/matthew-collett/go-ctag v1.0.0 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
